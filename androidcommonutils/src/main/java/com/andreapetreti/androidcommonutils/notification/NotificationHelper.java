@@ -1,0 +1,57 @@
+package com.andreapetreti.androidcommonutils.notification;
+
+import android.annotation.TargetApi;
+import android.app.NotificationChannel;
+import android.app.NotificationChannelGroup;
+import android.app.NotificationManager;
+import android.content.Context;
+import android.content.ContextWrapper;
+
+import androidx.annotation.NonNull;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+
+import java.util.List;
+
+public abstract class NotificationHelper extends ContextWrapper {
+
+    private NotificationManagerCompat mNotificationManagerCompat;
+
+    public NotificationHelper(Context base) {
+        super(base);
+        createChannelsAndGroups();
+    }
+
+    @TargetApi(android.os.Build.VERSION_CODES.O)
+    @NonNull
+    protected abstract List<NotificationChannel> onCreateChannels();
+
+    @NonNull
+    protected abstract List<NotificationChannelGroup> onCreateGroups();
+
+    private void createChannelsAndGroups()
+    {
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O && notificationManager != null) {
+            notificationManager.createNotificationChannels(onCreateChannels());
+            notificationManager.createNotificationChannelGroups(onCreateGroups());
+        }
+    }
+
+    protected NotificationCompat.Builder getNotificationBuilder(String channelId) {
+        return new NotificationCompat.Builder(this, channelId);
+    }
+
+    public void notify(int id, NotificationCompat.Builder notificationBuilder)
+    {
+        getManager().notify(id, notificationBuilder.build());
+
+    }
+
+    protected NotificationManagerCompat getManager() {
+        if (mNotificationManagerCompat == null)
+            mNotificationManagerCompat = NotificationManagerCompat.from(this);
+        return mNotificationManagerCompat;
+    }
+
+}
